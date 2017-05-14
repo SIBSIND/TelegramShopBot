@@ -86,13 +86,13 @@ class Telegram
     }
 
     /**
-     * @param string $command
      * @param Update $update
      *
-     * @return bool (true id $command is botCommand)
+     * @return bool (true if update text is botCommand)
      */
-    public static function botCommand(string $command, Update $update)
+    public static function botCommand(Update $update)
     {
+        $command = $update->getText();
         if ($command === '/listCity') {
             $city = CityManager::getAll();
             $message = 'Доступные города:' . PHP_EOL;
@@ -125,6 +125,29 @@ class Telegram
         $json = file_get_contents('https://api.telegram.org/bot'. Config::getToken() . '/' . $method . $optionsString);
 
         return json_decode($json, true);
+    }
+
+    public static function setWebHook()
+    {
+        $url = 'https://api.telegram.org/bot' . Config::getToken() . '/setWebhook';
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_POST => true,
+            CURLOPT_SAFE_UPLOAD => false,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POSTFIELDS => [
+                'url'         => Config::getWebHookURL(),
+                'certificate' => '@' . realpath(Config::getPathToSSLCertificate())
+            ]
+        ]);
+
+        $result = curl_exec($ch);
+        echo "<pre>";
+        print_r($result);
+        echo "</pre>";
+        curl_close($ch);
+
     }
 
 }

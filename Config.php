@@ -11,6 +11,11 @@ class Config
     private static $dbUser = 'root';
     private static $dbPassword = '1234';
 
+    public const METHOD_UPDATE_GETUPDATES = 0;
+    public const METHOD_UPDATE_WEBHOOK = 1;
+    private static $methodOfUpdating = self::METHOD_UPDATE_WEBHOOK;
+    private static $webHookURL = '';
+    private static $PathToSSLCertificate = '/ssl/YOURPUBLIC.pem';
 
     /**
      * @return string
@@ -51,6 +56,31 @@ class Config
     {
         return self::$dbPassword;
     }
+
+    /**
+     * @return int
+     */
+    public static function getMethodOfUpdating(): int
+    {
+        return self::$methodOfUpdating;
+    }
+
+    /**
+     * @return string
+     */
+    public static function getWebHookURL(): string
+    {
+        return self::$webHookURL;
+    }
+
+    /**
+     * @return string
+     */
+    public static function getPathToSSLCertificate(): string
+    {
+        return self::$PathToSSLCertificate;
+    }
+
 
     private function __construct()
     {
