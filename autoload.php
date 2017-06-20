@@ -6,7 +6,9 @@ function loader1($class)
 }
 function loader2($class)
 {
-    include $_SERVER['DOCUMENT_ROOT'] . '/TelegarmShopBot/classes/' . str_replace('TelegramShopBot\\', '', $class) . '.php';
+    $class = str_replace('TelegramShopBot\\', '/TelegarmShopBot/classes/', $class);
+    $class = str_replace('\\', DIRECTORY_SEPARATOR, $class);
+    include $_SERVER['DOCUMENT_ROOT'] . $class . '.php';
 }
 
 spl_autoload_register('loader1');
