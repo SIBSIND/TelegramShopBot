@@ -3,7 +3,9 @@
 namespace TelegramShopBot\Database\Manager;
 
 use TelegramShopBot\Database\Database;
+use TelegramShopBot\Entity\City;
 use TelegramShopBot\Entity\District;
+use TelegramShopBot\Telegram;
 
 class DistrictManager extends Database
 {
@@ -12,12 +14,24 @@ class DistrictManager extends Database
      *
      * @return null|District
      */
-    public static function getById(int $id)
+    public static function getById($id)
     {
-        $data = self::$db->getRow('SELECT * FROM db_district WHERE id = ?i', $id);
+        $data = self::$db->getRow(
+            'SELECT D.*, C.name AS `city_name` 
+            FROM db_district AS D
+              LEFT JOIN db_city AS C ON D.city_id = C.id
+            WHERE D.id = ?i',
+            intval($id)
+        );
 
-        return (empty($data)) ? null :
-            new District(intval($data['id']), intval($data['city_id']), $data['name']);
+        if (empty($data)) {
+            return null;
+        }
+
+        $city = new City($data['city_id'], $data['city_name']);
+        $district = new District($data['id'], $data['name'], $city);
+
+        return $district;
     }
 
     /**
@@ -27,37 +41,75 @@ class DistrictManager extends Database
      */
     public static function getByName(string $name)
     {
-        $data = self::$db->getRow('SELECT * FROM db_district WHERE `name` = ?s', mb_strtolower($name));
+        $data = self::$db->getRow(
+            'SELECT D.*, C.name AS `city_name` 
+            FROM db_district AS D
+              LEFT JOIN db_city AS C ON D.city_id = C.id
+            WHERE D.`name` = ?s',
+            mb_strtolower($name)
+        );
 
-        return (empty($data)) ? null :
-            new District(intval($data['id']), intval($data['city_id']), $data['name']);
+        if (empty($data)) {
+            return null;
+        }
+
+        $city = new City($data['city_id'], $data['city_name']);
+        $district = new District($data['id'], $data['name'], $city);
+
+        return $district;
     }
 
     /**
      * @param int $cityId
      *
-     * @return null|District
+     * @return null|District[]
      */
-    public static function getByCity(int $cityId)
+    public static function getAllByCityId($cityId)
     {
-        $data = self::$db->getRow('SELECT * FROM db_district WHERE city_id = ?i', $cityId);
+        $data = self::$db->getAll(
+            'SELECT D.*, C.name AS `city_name` 
+            FROM db_district AS D
+              LEFT JOIN db_city AS C ON D.city_id = C.id 
+            WHERE D.city_id = ?i', intval($cityId));
 
-        return (empty($data)) ? null :
-            new District(intval($data['id']), intval($data['city_id']), $data['name']);
+        if (empty($data)) {
+            return null;
+        }
+
+        $districts = [];
+        foreach ($data as $item) {
+            $city = new City($item['city_id'], $item['city_name']);
+            $district = new District($item['id'], $item['name'], $city);
+            $districts[] = $district;
+        }
+
+        return $districts;
     }
 
     /**
      * @param int $cityId
      * @param string $name
      *
-     * @return int
+     * @return District
      */
-    public static function create(int $cityId, string $name)
+    public static function create($cityId, string $name)
     {
-        self::$db->query('INSERT INTO db_district SET city_id = ?i, `name` = ?s', $cityId, mb_strtolower($name));
+        self::$db->query('INSERT INTO db_district SET ?u',[
+            'city_id' => intval($cityId),
+            'name'    => mb_strtolower($name)
+            ]
+        );
 
-        return self::$db->insertId();
+        return new District(self::$db->insertId(), $name, CityManager::getById($cityId));
     }
 
+    public static function update(District $district)
+    {
+        self::$db->query('UPDATE db_district SET `name` = ?s WHERE id = ?i', $district->getName(), $district->getId());
+    }
 
+    public static function delete($id)
+    {
+        self::$db->query('DELETE FROM db_district WHERE id = ?i', intval($id));
+    }
 }

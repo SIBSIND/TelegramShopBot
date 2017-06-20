@@ -1,0 +1,11 @@
+Options All -Indexes
+DirectoryIndex index.php
+RewriteEngine On
+#php_flag allow_url_fopen 1
+
+# Редирект на https
+RewriteCond %{SERVER_PORT} !^443$
+RewriteCond %{HTTPS} =on
+RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [QSA,L]
+
+RewriteRule ^token/([A-Za-z0-9:_\-]+)(/?)+$ index.php?token=$1 [L]

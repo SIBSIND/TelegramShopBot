@@ -2,11 +2,16 @@
 
 namespace TelegramShopBot\Entity;
 
+use TelegramShopBot\Database\Manager\OrderManager;
+
 class Chat
 {
     const STATUS_GET_CITY = 0;
-    const STATUS_GET_DISTRICT = 1;
-    const STATUS_CITY_AND_DISTRICT_INSTALLED = 10;
+    const STATUS_CITY_INSTALLED = 1;
+    const STATUS_PRODUCT_SELECTED = 2;
+    const STATUS_DISTRICT_SELECTED = 3;
+    const STATUS_PAYMENT_SELECTED = 4;
+    const STATUS_PAYD_SUCCESS = 5;
 
     /**
      * @var int
@@ -29,14 +34,14 @@ class Chat
     private $status;
 
     /**
-     * @var int
+     * @var City|null
      */
-    private $cityId;
+    private $city = null;
 
     /**
-     * @var int
+     * @var Order|null
      */
-    private $districtId;
+    private $order = null;
 
     /**
      * Chat constructor.
@@ -45,17 +50,13 @@ class Chat
      * @param string $firstName
      * @param string $username
      * @param int $status
-     * @param int $cityId
-     * @param int $districtId
      */
-    public function __construct(int $id, string $firstName, string $username, int $status = self::STATUS_GET_CITY, int $cityId = 0, int $districtId = 0)
+    public function __construct($id, $firstName, $username, $status = self::STATUS_GET_CITY)
     {
-        $this->id         = $id;
+        $this->id         = intval($id);
         $this->firstName  = $firstName;
         $this->username   = $username;
-        $this->status     = $status;
-        $this->cityId     = $cityId;
-        $this->districtId = $districtId;
+        $this->status     = intval($status);
     }
 
 
@@ -72,9 +73,9 @@ class Chat
      *
      * @return $this
      */
-    public function setId(int $id)
+    public function setId($id)
     {
-        $this->id = $id;
+        $this->id = intval($id);
         return $this;
     }
 
@@ -116,62 +117,45 @@ class Chat
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getCityId()
+    public function getCity(): ?City
     {
-        if (empty($this->cityId))
-            return null;
-        return $this->cityId;
+        return $this->city;
     }
 
-    /**
-     * @param int $cityId
-     *
-     * @return $this
-     */
-    public function setCityId(int $cityId)
+    public function setCity(?City $city): Chat
     {
-        $this->cityId = $cityId;
+        $this->city = $city;
         return $this;
     }
 
-    /**
-     * @return int
-     */
     public function getStatus(): int
     {
         return $this->status;
     }
 
-    /**
-     * @param int $status
-     *
-     * @return $this
-     */
-    public function setStatus(int $status)
+    public function setStatus(int $status): Chat
     {
         $this->status = $status;
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getDistrictId(): int
+    public function getOrder(): ?Order
     {
-        return $this->districtId;
+        if (is_null($this->order)) {
+            $this->order = OrderManager::getOneBy(['chat_id' => $this->id]);
+        }
+
+        return $this->order;
     }
 
     /**
-     * @param int $districtId
+     * @param Order $order
      *
      * @return $this
      */
-    public function setDistrictId(int $districtId)
+    public function setOrder(Order $order)
     {
-        $this->districtId = $districtId;
+        $this->order = $order;
         return $this;
     }
 }

@@ -16,7 +16,7 @@ class Database
      */
     public static function initDb()
     {
-        if (self::$db === null) {
+        if (self::$db == null) {
             self::$db = new SafeMySQL([
                 'host'    => Config::getDbHost(),
                 'user'    => Config::getDbUser(),
@@ -30,9 +30,9 @@ class Database
     /**
      * @param int $offset
      */
-    public static function setOffset(int $offset)
+    public static function setOffset($offset)
     {
-        self::$db->query('UPDATE db_config SET offset = ?i', $offset);
+        self::$db->query('UPDATE db_config SET offset = ?i', intval($offset));
     }
 
     /**
@@ -40,7 +40,7 @@ class Database
      */
     public static function getOffset(): int
     {
-        return intval(self::$db->getOne('SELECT offset FROM db_config WHERE id = 1'));
+        return intval(self::$db->getOne('SELECT `offset` FROM db_config WHERE id = 1'));
     }
 
     private function __construct()

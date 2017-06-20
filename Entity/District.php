@@ -9,9 +9,9 @@ class District {
     private $id;
 
     /**
-     * @var int
+     * @var City
      */
-    private $cityId;
+    private $city;
 
     /**
      * @var string
@@ -22,13 +22,13 @@ class District {
      * District constructor.
      *
      * @param int $id
-     * @param int $cityId
      * @param string $name
+     * @param City $city
      */
-    public function __construct(int $id, int $cityId, string $name)
+    public function __construct($id, string $name, City $city)
     {
-        $this->id = $id;
-        $this->cityId = $cityId;
+        $this->id = intval($id);
+        $this->city = $city;
         $this->name = $name;
     }
 
@@ -52,21 +52,21 @@ class District {
     }
 
     /**
-     * @return int
+     * @return City
      */
-    public function getCityId(): int
+    public function getCity(): City
     {
-        return $this->cityId;
+        return $this->city;
     }
 
     /**
-     * @param int $cityId
+     * @param City $city
      *
      * @return $this
      */
-    public function setCityId(int $cityId)
+    public function setCity(City $city)
     {
-        $this->cityId = $cityId;
+        $this->city = $city;
         return $this;
     }
 
@@ -75,7 +75,7 @@ class District {
      */
     public function getName(): string
     {
-        return ucwords($this->name);
+        return mb_convert_case($this->name, MB_CASE_TITLE);
     }
 
     /**

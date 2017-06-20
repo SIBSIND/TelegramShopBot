@@ -548,7 +548,7 @@ class SafeMySQL
         return $value;
     }
 
-    private function escapeString($value)
+    public function escapeString($value)
     {
         if ($value === NULL) {
             return 'NULL';

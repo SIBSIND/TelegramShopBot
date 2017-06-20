@@ -2,10 +2,10 @@
 
 namespace TelegramShopBot\Entity;
 
-class City
-{
+class Product {
+
     /**
-     * @var integer
+     * @var int
      */
     private $id;
 
@@ -15,21 +15,28 @@ class City
     private $name;
 
     /**
-     * City constructor.
+     * @var int
+     */
+    private $price;
+
+    /**
+     * Product constructor.
      *
      * @param int $id
      * @param string $name
+     * @param int $price
      */
-    public function __construct($id, string $name)
+    public function __construct($id, $name, $price)
     {
         $this->id = intval($id);
         $this->name = $name;
+        $this->price = intval($price);
     }
 
     /**
      * @return int
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
@@ -39,19 +46,18 @@ class City
      *
      * @return $this
      */
-    public function setId(int $id)
+    public function setId($id)
     {
-        $this->id = $id;
-
+        $this->id = intval($id);
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
-        return mb_convert_case($this->name, MB_CASE_TITLE);
+        return $this->name;
     }
 
     /**
@@ -62,12 +68,26 @@ class City
     public function setName(string $name)
     {
         $this->name = $name;
-
         return $this;
     }
 
-    public function __toString()
+    /**
+     * @return int
+     */
+    public function getPrice(): int
     {
-        return $this->getName();
+        return $this->price;
     }
+
+    /**
+     * @param int $price
+     *
+     * @return $this
+     */
+    public function setPrice($price)
+    {
+        $this->price = intval($price);
+        return $this;
+    }
+
 }

@@ -1,79 +1,61 @@
 <?php
 
+use TelegramShopBot\BotLogic;
 use TelegramShopBot\Config;
-use TelegramShopBot\Database\Database;;
-use TelegramShopBot\Database\Manager\ChatManager;
-use TelegramShopBot\Database\Manager\CityManager;
-use TelegramShopBot\Database\Manager\DistrictManager;
-use TelegramShopBot\Entity\Chat;
+use TelegramShopBot\Database\Database;
+use TelegramShopBot\Database\Manager\OrderManager;
 use TelegramShopBot\Telegram;
 
 require 'autoload.php';
+if (file_exists('settings_dev.php')) {
+    require 'settings_dev.php';
+} else {
+    require 'settings.php';
+}
 
+Config::init($settings);
 Database::initDb();
 
+if (!empty($_GET['webHook'])) {
+    if (Config::getMethodOfUpdating() !== Config::METHOD_UPDATE_WEBHOOK) {
+        exit('Сначала вы должны в настройках указать верно метод получения обновлений');
+    }
+
+    if ($_GET['webHook'] === 'set') {
+        print_r(Telegram::setWebHook());
+    } elseif ($_GET['webHook'] === 'info') {
+        print_r(Telegram::getWebHookInfo());
+    } else {
+        exit(
+            'Нужно указать действие, которое необходимо выполнить: <br>' . PHP_EOL .
+            'set - установить вебхук <br>' . PHP_EOL .
+            'info - получить информацию по вебхуку <br>' . PHP_EOL
+        );
+    }
+    exit('<br>' . PHP_EOL);
+}
+
 if (Config::getMethodOfUpdating() === Config::METHOD_UPDATE_WEBHOOK) {
-    if (isset($_GET['installHandler'])) {
-        if ($_GET['installHandler'] === Config::getToken()) {
-            Telegram::setWebHook();
+
+    if (empty($_GET['token']) || !in_array($_GET['token'], Config::getBots(), true)) {
+        exit('Ошибка токена');
+    }
+
+    foreach (Config::getBots() as $botName => $token) {
+        if ($token === $_GET['token']) {
+            Config::setBotName($botName);
+            Config::setToken($token);
         }
     }
+
+    $update = Telegram::getWebHookUpdate();
+    BotLogic::handlerUpdate($update);
+
 } elseif (Config::getMethodOfUpdating() === Config::METHOD_UPDATE_GETUPDATES) {
 
     $updates = Telegram::getUpdates(Database::getOffset());
 
     foreach ($updates as $update) {
-
-        // Является ли сообщение коммандой
-        if (!Telegram::botCommand($update)) {
-
-            // Статус чата не совпадает со статусом в БД (был изменен)
-            if (ChatManager::getById($update->getChat()->getId())->getStatus() === $update->getChat()->getStatus()) {
-
-                // По статусу мы ждем от пользователя, чтобы он ввел город
-                if ($update->getChat()->getStatus() === Chat::STATUS_GET_CITY) {
-                    $city = CityManager::getByName($update->getText());
-
-                    if (empty($city)) {
-                        Telegram::sendMessage(
-                            $update->getChat(),
-                            'Перед началом работы необходимо указать город, в котором вы хотите совершить покупку.' . PHP_EOL .
-                            '(Для списка доступных городов введите /listCity)'
-                        );
-                    } else {
-                        $update->getChat()->setCityId($city->getId());
-                        $update->getChat()->setStatus(Chat::STATUS_GET_DISTRICT);
-                        ChatManager::update($update->getChat());
-                        Telegram::sendMessage(
-                            $update->getChat(),
-                            'Город "' . $city->getName() . '" установлен успешно. ' . PHP_EOL .
-                            'Теперь введите район, в котором вы хотите получить товар'
-                        );
-                    }
-
-                } // Ожидаем ввод района города
-                elseif ($update->getChat()->getStatus() === Chat::STATUS_GET_DISTRICT) {
-                    $district = DistrictManager::getByName($update->getText());
-
-                    if (empty($district)) {
-                        Telegram::sendMessage(
-                            $update->getChat(),
-                            'Необходимо указать район города, в котором вы хотели бы получить товар.' . PHP_EOL .
-                            '(Чтобы просмотреть список доступных районов введите /listDistrict'
-                        );
-                    } else {
-                        $update->getChat()->setDistrictId($district->getId());
-                        $update->getChat()->setStatus(Chat::STATUS_CITY_AND_DISTRICT_INSTALLED);
-                        ChatManager::update($update->getChat());
-                        Telegram::sendMessage(
-                            $update->getChat(),
-                            '"' . $district->getName() . '" район установлен.'
-                        );
-                    }
-                } elseif ($update->getChat()->getStatus() === Chat::STATUS_CITY_AND_DISTRICT_INSTALLED) {
-                    Telegram::sendMessage($update->getChat(), 'status3');
-                }
-            }
-        }
+        BotLogic::handlerUpdate($update);
     }
 }
